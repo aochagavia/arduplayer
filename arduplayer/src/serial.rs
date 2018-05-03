@@ -1,3 +1,5 @@
+//! Utility functions to deal with the serial port
+
 use std::io;
 use std::process;
 use std::time::Duration;
@@ -8,10 +10,11 @@ use serialport::prelude::*;
 
 use util;
 
-// Detect available serial ports:
-// * If no ports are available, terminate the program.
-// * If there is only one port available, choose it automatically.
-// * If there are multiple ports available, prompt the user to choose.
+/// Detect available serial ports:
+///
+/// * If no ports are available, terminate the program
+/// * If there is only one port available, choose it automatically
+/// * If there are multiple ports available, prompt the user to choose
 pub fn get_port_name() -> String {
     let mut ports = serialport::available_ports().unwrap();
     match ports.len() {
@@ -45,8 +48,10 @@ pub fn get_port_name() -> String {
     }
 }
 
-pub fn open_port(name: &str) -> Box<SerialPort> {
-    // Set up the serial port
+/// Set up the serial port connection
+///
+/// Note: panics if there is an error
+pub fn open_port(name: &str) -> Result<Box<SerialPort>, serialport::Error> {
     let settings = SerialPortSettings {
         baud_rate: BaudRate::Baud9600,
         // Fields below are set by default on the Arduino side
@@ -58,9 +63,10 @@ pub fn open_port(name: &str) -> Box<SerialPort> {
         // Some random timeout... seems to work
         timeout: Duration::from_millis(20),
     };
-    serialport::open_with_settings(&name, &settings).expect("Unable to open serial port")
+    serialport::open_with_settings(&name, &settings)
 }
 
+/// Write a note to the serial port
 pub fn write_note(port: &mut SerialPort, pin_id: u8, freq: u16) -> io::Result<()> {
     port.write_u8(pin_id)?;
     port.write_u16::<LittleEndian>(util::freq_to_delay(freq))

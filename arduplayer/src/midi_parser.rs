@@ -11,6 +11,9 @@ pub struct MidiParser {
     tracks: Vec<MidiTrack>,
 }
 
+/// Represents a track that is being parsed
+///
+/// Note that, after parsing, the events will be exported to a `song::Track`
 pub struct MidiTrack {
     name: Option<String>,
     notes: Vec<Event>,
@@ -48,11 +51,15 @@ impl MidiParser {
         self.tracks.push(MidiTrack { name, notes, unknown_events, ignored_dt });
     }
 
+    /// Load a song located at the given path
+    ///
+    /// Note: panics if the file does not exist. Other errors are logged to stderr
+    /// and ignored afterwards
     pub fn load_song(path: &Path) -> Song {
         let mut handler = MidiParser::new();
         let mut reader = Reader::new(&mut handler, path).unwrap();
         if let Some(err) = reader.read().err() {
-            println!("Error reading midi file: {}", err)
+            eprintln!("Error reading midi file: {}", err)
         }
 
         // debug_tracks(&handler.tracks);
@@ -87,7 +94,7 @@ impl MidiParser {
 //             }
 //         }
 
-//         println!("{}. {} (min speakers: {})",
+//         println!("{}. {} (min buzzers: {})",
 //             index,
 //             t.name.as_ref().unwrap_or(&String::from("<unknown>")),
 //             player.playing.len()
@@ -156,7 +163,7 @@ impl Handler for MidiParser {
             }
             MidiEvent::ControlChange { .. } => {
                 // Example control changes: vibrato, piano pedal, reverb, etc
-                // Since our little speakers don't have anything like this, we can ignore it
+                // Since our little buzzers don't have anything like this, we can ignore it
 
                 self.current_track().ignored_dt += delta_time;
             }

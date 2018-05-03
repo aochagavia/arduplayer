@@ -18,7 +18,7 @@ fn main() {
             &*song_name
         };
 
-        let mut player = Player::new(6);
+        let mut player = Player::new(6).expect("Could not initialize serial port");
         let song = Song::from_midi(format!("music/{}.mid", song_name));
         let options = &songs[song_name];
         player.play_song(song, options.borrow());

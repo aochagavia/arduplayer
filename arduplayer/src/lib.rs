@@ -1,5 +1,8 @@
 #![feature(nll)]
 
+//! A library to control an arduino through the serial port so it plays music
+//! on multiple buzzers at the same time
+
 extern crate byteorder;
 extern crate ghakuf;
 extern crate serialport;

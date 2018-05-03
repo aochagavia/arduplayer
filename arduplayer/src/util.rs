@@ -1,3 +1,5 @@
+//! Utility functions
+
 pub fn transpose(midi_code: u8, octaves: i8) -> u8 {
     let result = (midi_code as i16) + octaves as i16 * 12;
     if 24 <= result && result <= 107 {

@@ -4,20 +4,24 @@ use std::path::Path;
 use midi_parser::MidiParser;
 use util;
 
+/// A song
 pub struct Song {
     pub time_base: u16,
     pub tracks: Vec<Track>
 }
 
+/// A track
 pub struct Track {
     events: Vec<Event>
 }
 
 impl Track {
+    /// Create a new track, based on a series of events
     pub fn new(events: Vec<Event>) -> Track {
         Track { events }
     }
 
+    /// Transpose this track
     pub fn transpose(mut self, octaves: i8) -> Track {
         for event in &mut self.events {
             match event {
@@ -30,15 +34,23 @@ impl Track {
         self
     }
 
+    /// Return a slice into the events of this Track
     pub fn events(&self) -> &[Event] {
         &self.events
     }
 }
 
+/// An event
 #[derive(Copy, Clone)]
 pub enum Event {
+    /// Start playing the tone with the given velocity
+    ///
+    /// Note: the velocity is used to indicate the volume, but we don't use it
+    /// because buzzers can only be turned on and off
     Play { tone: u8, velocity: u8 },
+    /// Stop playing the tone
     Stop { tone: u8 },
+    /// Wait for a given amount of milliseconds
     Wait(u32)
 }
 
@@ -59,11 +71,15 @@ impl Event {
 }
 
 impl Song {
+    /// Create a song from a midi file
+    ///
+    /// Note: this function will panic if the file does not exist
     pub fn from_midi<P: AsRef<Path>>(path: P) -> Song {
         MidiParser::load_song(path.as_ref())
     }
 }
 
+/// Merge multiple tracks into a single track
 pub fn merge_tracks(tracks: Vec<Track>) -> Track {
     let mut events = Vec::new();
 

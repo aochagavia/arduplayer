@@ -61,7 +61,7 @@ pub fn open_port(name: &str) -> Result<Box<SerialPort>, serialport::Error> {
         // Some internet forum says Arduino does not use flow control
         flow_control: FlowControl::None,
         // Some random timeout... seems to work
-        timeout: Duration::from_millis(20),
+        timeout: Duration::from_millis(5),
     };
     serialport::open_with_settings(&name, &settings)
 }

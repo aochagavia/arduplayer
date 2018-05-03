@@ -4,8 +4,7 @@ uint16_t pin_delays[PIN_MAP_SIZE] = { 0, 0, 0, 0, 0, 0 };
 uint16_t pin_last_writes[PIN_MAP_SIZE] = { 0, 0, 0, 0, 0, 0 };
 uint16_t pin_next_writes[PIN_MAP_SIZE] = { 0, 0, 0, 0, 0, 0 };
 
-class SoftPWM {
-    public:
+namespace soft_pwm {
     void setup_pins() {
         for (int i = 0; i < PIN_MAP_SIZE; i++) {
             pinMode(pin_map[i], OUTPUT);

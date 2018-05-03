@@ -2,8 +2,11 @@ use std::io;
 use std::process;
 use std::time::Duration;
 
+use byteorder::{LittleEndian, WriteBytesExt};
 use serialport;
 use serialport::prelude::*;
+
+use util;
 
 // Detect available serial ports:
 // * If no ports are available, terminate the program.
@@ -46,14 +49,19 @@ pub fn open_port(name: &str) -> Box<SerialPort> {
     // Set up the serial port
     let settings = SerialPortSettings {
         baud_rate: BaudRate::Baud9600,
-        // Field below are set by default on the Arduino side
+        // Fields below are set by default on the Arduino side
         data_bits: DataBits::Eight,
         parity: Parity::None,
         stop_bits: StopBits::One,
         // Some internet forum says Arduino does not use flow control
         flow_control: FlowControl::None,
-        // Some random timeout
+        // Some random timeout... seems to work
         timeout: Duration::from_millis(20),
     };
     serialport::open_with_settings(&name, &settings).expect("Unable to open serial port")
+}
+
+pub fn write_note(port: &mut SerialPort, pin_id: u8, freq: u16) -> io::Result<()> {
+    port.write_u8(pin_id)?;
+    port.write_u16::<LittleEndian>(util::freq_to_delay(freq))
 }

@@ -3,7 +3,6 @@ use std::thread;
 
 use serialport::SerialPort;
 
-use command::Command;
 use note_scheduler::NoteScheduler;
 use song::{self, Event, Song};
 
@@ -44,23 +43,11 @@ impl Player {
             .collect();
 
         let track = song::merge_tracks(tracks);
-        let track_transpose = 0;
 
         for event in &track.inner {
             match *event {
-                Event::Play { tone, .. } => {
-                    let tone = util::transpose(tone, track_transpose);
-                    if let Some(speaker_id) = self.scheduler.start_note(tone) {
-                        let freq = util::midi_code_to_freq(tone).unwrap();
-                        Command::new(speaker_id, freq).write(&mut *self.port).expect("Something went wrong");
-                    }
-                }
-                Event::Stop { tone } => {
-                    let tone = util::transpose(tone, track_transpose);
-                    if let Some(speaker_id) = self.scheduler.stop_note(tone) {
-                        Command::new(speaker_id, 0).write(&mut *self.port).expect("Something went wrong");
-                    }
-                }
+                Event::Play { tone, .. } => self.play_note(tone, true),
+                Event::Stop { tone } => self.play_note(tone, false),
                 Event::Wait(time) => {
                     if time != 0 {
                         thread::sleep(Duration::from_millis((time as f64 * metadata.delay_mul) as u64));
@@ -68,27 +55,24 @@ impl Player {
                 }
             }
         }
-
-        // Just in case, stop playing in all the speakers
     }
 
     pub fn play_note(&mut self, midi_code: u8, on: bool) {
-        // FIXME: this should have no delay on the arduino side!
         // Get available speaker, if any
-        let speaker_id = if on {
+        let maybe_speaker_id = if on {
             self.scheduler.start_note(midi_code)
         } else {
             self.scheduler.stop_note(midi_code)
         };
 
-        if let Some(speaker_id) = speaker_id {
+        if let Some(speaker_id) = maybe_speaker_id {
             let freq = if on {
                 util::midi_code_to_freq(midi_code).unwrap()
             } else {
                 0
             };
 
-            Command::new(speaker_id, freq ).write(&mut *self.port).expect("Something went wrong");
+            serial::write_note(&mut *self.port, speaker_id, freq).expect("Something went wrong");
         }
     }
 }

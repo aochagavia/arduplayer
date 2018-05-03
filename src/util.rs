@@ -21,6 +21,7 @@ pub fn freq_to_delay(freq: u16) -> u16 {
     // C4 has a frequency of 262, which means that it goes on and off 262 times per second
     // This formula calculates the delay needed to generate that frequency
 
+    // Avoid division by 0
     if freq == 0 {
         return 0;
     }

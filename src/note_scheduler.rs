@@ -8,6 +8,7 @@ pub struct NoteScheduler {
 }
 
 impl NoteScheduler {
+    /// Create a new scheduler with the given amount of speakers
     pub fn new(speakers: u8) -> NoteScheduler {
         NoteScheduler {
             playing: Vec::with_capacity(speakers as usize),
@@ -17,7 +18,7 @@ impl NoteScheduler {
         }
     }
 
-    // Register the note as playing and return the speaker it should be played in
+    /// Register the note as playing and return the speaker it should be played in
     pub fn start_note(&mut self, note: u8) -> Option<u8> {
         // Find an available speaker and use it
         if let Some((index, speaker)) = self.speakers.iter_mut().enumerate().find(|&(_, &mut in_use)| !in_use) {
@@ -33,6 +34,7 @@ impl NoteScheduler {
         }
     }
 
+    /// Register that the note has stopped playing and return the speaker it was playing on
     pub fn stop_note(&mut self, note: u8) -> Option<u8> {
         // Ensure the note is already playing, and remove it from the speaker
         if let Some(pos) = self.playing.iter().position(|&(n, _)| n == note) {

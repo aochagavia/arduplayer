@@ -3,12 +3,10 @@ use std::path::Path;
 use ghakuf::reader::{Handler, Reader};
 use ghakuf::messages::{MetaEvent, MidiEvent, SysExEvent};
 
-use note_scheduler::NoteScheduler;
 use song::{Song, Track, Event};
 
-// Store tracks that have only NoteOn and NoteOff events
-struct MyHandler {
-    // The time base means "ticks per quarter note" (I think!)
+/// A parser to extract NoteOn and NoteOff MIDI events, per track
+pub struct MidiParser {
     time_base: Option<u16>,
     tracks: Vec<MidiTrack>,
 }
@@ -28,9 +26,9 @@ impl MidiTrack {
     }
 }
 
-impl MyHandler {
-    fn new() -> MyHandler {
-        MyHandler { time_base: None, tracks: Vec::new() }
+impl MidiParser {
+    fn new() -> MidiParser {
+        MidiParser { time_base: None, tracks: Vec::new() }
     }
 
     fn current_track_opt(&mut self) -> Option<&mut MidiTrack> {
@@ -49,9 +47,55 @@ impl MyHandler {
         let ignored_dt = 0;
         self.tracks.push(MidiTrack { name, notes, unknown_events, ignored_dt });
     }
+
+    pub fn load_song(path: &Path) -> Song {
+        let mut handler = MidiParser::new();
+        let mut reader = Reader::new(&mut handler, path).unwrap();
+        if let Some(err) = reader.read().err() {
+            println!("Error reading midi file: {}", err)
+        }
+
+        // debug_tracks(&handler.tracks);
+
+        Song {
+            time_base: handler.time_base.unwrap(),
+            tracks: handler.tracks.into_iter().map(|t| Track::new(t.notes)).collect()
+        }
+    }
 }
 
-impl Handler for MyHandler {
+// fn debug_tracks(tracks: &[MidiTrack]) {
+//     use note_scheduler::NoteScheduler;
+//     println!("Tracks:");
+//     for (index, t) in tracks.iter().enumerate() {
+//         // Play the thing virtually
+//         let mut player = NoteScheduler::new(50);
+//         for &event in &t.notes {
+//             match event {
+//                 Event::Play { tone, .. } => {
+//                     player.start_note(tone);
+
+//                 }
+//                 Event::Stop { tone } => {
+//                     player.stop_note(tone);
+
+//                 }
+//                 Event::Wait(_) => {
+//                     // Ignore wait events, since we are only interested in seeing how many
+//                     // notes are played in parallel
+//                 }
+//             }
+//         }
+
+//         println!("{}. {} (min speakers: {})",
+//             index,
+//             t.name.as_ref().unwrap_or(&String::from("<unknown>")),
+//             player.playing.len()
+//         );
+//     }
+// }
+
+impl Handler for MidiParser {
     fn header(&mut self, _format: u16, _track: u16, time_base: u16) {
         assert_eq!(self.time_base, None);
         self.time_base = Some(time_base);
@@ -64,7 +108,7 @@ impl Handler for MyHandler {
 
                 let name = String::from_utf8_lossy(data);
                 self.current_track().name = Some(name.to_string());
-                println!("Loading track {}", name);
+                // println!("Loading track {}", name);
             }
             &MetaEvent::EndOfTrack => {
                 //assert_eq!(delta_time, 0);
@@ -73,7 +117,7 @@ impl Handler for MyHandler {
             }
             _ => {
                 self.current_track().ignored_dt += delta_time;
-                println!("Meta event: {} {}", delta_time, event);
+                // println!("Meta event: {} {}", delta_time, event);
             }
         }
     }
@@ -117,7 +161,7 @@ impl Handler for MyHandler {
                 self.current_track().ignored_dt += delta_time;
             }
             _ => {
-                println!("Unknown midi event: {}", event);
+                // println!("Unknown midi event: {}", event);
 
                 self.current_track().ignored_dt += delta_time;
                 self.current_track().unknown_events += 1;
@@ -125,58 +169,15 @@ impl Handler for MyHandler {
         }
     }
 
-    fn sys_ex_event(&mut self, delta_time: u32, event: &SysExEvent, _data: &Vec<u8>) {
-        println!("Sys Ex event found, ignoring track: {} {}", delta_time, event);
+    fn sys_ex_event(&mut self, delta_time: u32, _event: &SysExEvent, _data: &Vec<u8>) {
+        // println!("Sys Ex event found, ignoring track: {} {}", delta_time, event);
 
         self.current_track().ignored_dt += delta_time;
         self.current_track().unknown_events += 1;
     }
 
     fn track_change(&mut self) {
-        println!("Track change");
+        // println!("Track change");
         self.add_track();
-    }
-}
-
-pub fn load(path: &Path) -> Song {
-    let mut handler = MyHandler::new();
-    {
-        let mut reader = Reader::new(&mut handler, path).unwrap();
-        if let Some(err) = reader.read().err() {
-            println!("Error reading midi file: {}", err)
-        }
-    }
-
-    println!("Tracks:");
-    for (index, t) in handler.tracks.iter().enumerate() {
-        // Play the thing virtually
-        let mut player = NoteScheduler::new(50);
-        for &event in &t.notes {
-            match event {
-                Event::Play { tone, .. } => {
-                    player.start_note(tone);
-
-                }
-                Event::Stop { tone } => {
-                    player.stop_note(tone);
-
-                }
-                Event::Wait(_) => {
-                    // Ignore wait events, since we are only interested in seeing how many
-                    // notes are played in parallel
-                }
-            }
-        }
-
-        println!("{}. {} (min speakers: {})",
-            index,
-            t.name.as_ref().unwrap_or(&String::from("<unknown>")),
-            player.playing.len()
-        );
-    }
-
-    Song {
-        time_base: handler.time_base.unwrap(),
-        tracks: handler.tracks.into_iter().map(|t| Track { name: t.name, inner: t.notes  }).collect()
     }
 }

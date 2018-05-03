@@ -5,3 +5,4 @@ authors = ["Adolfo Ochagavía <aochagavia92@gmail.com>"]
 
 [dependencies]
 arduplayer = { path = ".." }
+rand = "0.4"

@@ -1,3 +1,5 @@
+#![feature(nll)]
+
 extern crate byteorder;
 extern crate ghakuf;
 extern crate serialport;
@@ -9,5 +11,5 @@ mod player;
 mod song;
 mod util;
 
-pub use player::{Player, SongMetadata};
+pub use player::{Player, PlayerOptions};
 pub use song::{Event, Song, Track};

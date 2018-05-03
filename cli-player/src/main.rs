@@ -2,8 +2,9 @@ extern crate arduplayer;
 extern crate rand;
 
 use std::collections::HashMap;
-use std::env;
+use std::{env, thread };
 use std::hash::Hash;
+use std::time::Duration;
 
 use arduplayer::{Player, PlayerOptions, Song};
 use rand::Rng;
@@ -19,6 +20,10 @@ fn main() {
         };
 
         let mut player = Player::new(6).expect("Could not initialize serial port");
+
+        // Delay to get serial connection set up
+        thread::sleep(Duration::from_millis(3000));
+
         let song = Song::from_midi(format!("music/{}.mid", song_name));
         let options = &songs[song_name];
         player.play_song(song, options.borrow());

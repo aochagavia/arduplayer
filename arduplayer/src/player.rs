@@ -89,4 +89,8 @@ impl Player {
             serial::write_note(&mut *self.port, buzzer_id, freq).expect("Something went wrong");
         }
     }
+
+    pub fn playing<'a>(&'a self) -> impl Iterator<Item=u8> + 'a {
+        self.scheduler.playing.iter().map(|(note, _)| *note)
+    }
 }

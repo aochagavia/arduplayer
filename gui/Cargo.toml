@@ -1,0 +1,8 @@
+[package]
+name = "gui"
+version = "0.1.0"
+authors = ["Adolfo Ochagavía <aochagavia92@gmail.com>"]
+
+[dependencies]
+arduplayer = { path = ".." }
+ggez = "0.4.2"

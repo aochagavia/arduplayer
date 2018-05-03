@@ -1,0 +1,6 @@
+.idea
+/Cargo.lock
+cli-player/music
+target
+gui/SDL2.dll
+**/*.rs.bk
